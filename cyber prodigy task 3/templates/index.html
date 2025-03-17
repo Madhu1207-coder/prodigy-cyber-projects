@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Strength Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background-image: url('https://assets.bizclikmedia.net/900/042c7dcf3859461986d766c5456fe5d9:5f4104207a534dfc331ef339bda047c1/gettyimages-1258622079-20-282-29-1-jpg.webp');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header with peacock blue background */
+        header {
+            background-color: #004b6e; /* Peacock Blue */
+            color: white;
+            padding: 3px; /* Reduced padding for a smaller header */
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Style for the password strength checker container */
+        .container {
+            margin-top: 50px; /* Increased gap to 50px between header and box */
+            padding: 20px;
+            background-color: rgb(8, 150, 160); /* Slightly transparent white */
+            border-radius: 10px;
+            width: 400px;
+            margin-left: 70px; /* Align container to the left */
+            box-shadow: 0 0 10px rgb(81, 160, 196);
+            text-align: center;
+        }
+
+        /* Input fields */
+        input {
+            width: 90%;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        /* Buttons */
+        button {
+            padding: 8px;
+            margin: 10px;
+            background-color: #eaac26;
+            color: rgb(18, 8, 8);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 90%;
+        }
+
+        button:hover {
+            background-color: #b2d2f6;
+        }
+
+        /* Progress bar for password strength */
+        progress {
+            width: 100%;
+            height: 15px;
+        }
+
+        /* Style for password strength text and suggestions */
+        #password-strength {
+            margin-top: 10px;
+        }
+
+        #suggestions {
+            list-style-type: none;
+            padding: 0;
+            color: red;
+        }
+
+        #entropy-score {
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
+        #password-match {
+            margin-top: 10px;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section with Peacock Blue background and white text -->
+    <header>
+        <h1>Password Strength Checker</h1>
+    </header>
+
+    <!-- Password strength checker container -->
+    <div class="container">
+        <input type="password" id="password" placeholder="Enter your password" oninput="checkPasswordStrength()">
+        <progress id="strength-meter" value="0" max="100"></progress>
+        <div id="password-strength"></div>
+        <div id="entropy-score"></div>
+        <ul id="suggestions"></ul>
+
+        <button onclick="togglePasswordVisibility()">Show/Hide Password</button>
+        <button onclick="generatePassword()">Generate Strong Password</button>
+        <input type="text" id="generated-password" readonly>
+
+        <div>
+            <h2>Confirm Password</h2>
+            <input type="password" id="confirm-password" placeholder="Confirm your password" oninput="confirmPasswordMatch()">
+            <div id="password-match"></div>
+        </div>
+    </div>
+
+    <script>
+        function checkPasswordStrength() {
+            const password = document.getElementById('password').value;
+
+            fetch('/check-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('password-strength').textContent = data.strength;
+                document.getElementById('entropy-score').textContent = `Entropy: ${data.entropy}`;
+                
+                const strengthMeter = document.getElementById('strength-meter');
+                let strengthValue = data.entropy;
+                strengthMeter.value = strengthValue;
+
+                const suggestionsList = document.getElementById('suggestions');
+                suggestionsList.innerHTML = '';
+                data.suggestions.forEach(suggestion => {
+                    const li = document.createElement('li');
+                    li.textContent = suggestion;
+                    suggestionsList.appendChild(li);
+                });
+            });
+        }
+
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const type = passwordInput.type === 'password' ? 'text' : 'password';
+            passwordInput.type = type;
+        }
+
+        function generatePassword() {
+            fetch('/generate-password')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('generated-password').value = data.password;
+                });
+        }
+
+        function confirmPasswordMatch() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const matchText = document.getElementById('password-match');
+
+            if (password === confirmPassword) {
+                matchText.textContent = "Passwords match!";
+                matchText.style.color = 'green';
+            } else {
+                matchText.textContent = "Passwords do not match!";
+                matchText.style.color = 'red';
+            }
+        }
+    </script>
+</body>
+</html>

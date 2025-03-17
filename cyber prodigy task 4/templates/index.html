@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Keylogger</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('https://www.unite.ai/wp-content/uploads/2024/08/3-pillars-of-cybersecurity.webp');
+            background-size: cover; 
+            background-position: center; 
+            padding: 0; 
+            margin: 0; 
+            color: #eef6f7; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start; /* Align items at the top */
+            height: 100vh; /* Full viewport height */
+        }
+        #header {
+            background-color: black; 
+            color: white; 
+            text-align: center; 
+            height: 60px; 
+            line-height: 60px; 
+            border-bottom: 2px solid #ccc; 
+            width: 100%; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            z-index: 1000; 
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); 
+        }
+        #header h1 {
+            margin: 0; 
+            font-size: 18px; 
+            font-weight: normal; 
+            padding: 0; 
+        }
+        #button-container {
+            margin-top: 80px; /* Space below the header */
+            padding: 20px; 
+            border: 1px solid #f7f2f2; 
+            background-color: rgba(8, 6, 6, 0.8); 
+            border-radius: 8px; 
+            text-align: center; 
+            width: 300px; /* Set a fixed width for the button box */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); 
+        }
+        #output {
+            border: 1px solid #f6f1f1;
+            padding: 10px;
+            background-color: rgb(243, 152, 17); 
+            margin-top: 20px; 
+            min-height: 100px;
+            white-space: pre-wrap; 
+            overflow-y: auto; 
+            width: 300px; /* Set the same width as the button box */
+        }
+        button {
+            cursor: pointer; 
+            margin: 5px; /* Space between buttons */
+            padding: 10px 20px; 
+            font-size: 16px; 
+            border: none; 
+            border-radius: 5px; 
+            transition: background-color 0.3s; 
+        }
+        button:hover {
+            background-color: #eee5e5; 
+        }
+    </style>
+</head>
+<body>
+
+    <div id="header">
+        <h1>Simple Keylogger</h1>
+    </div>
+    
+    <div id="button-container">
+        <button id="startButton">Start Logging</button>
+        <button id="stopButton" disabled>Stop Logging</button>
+    </div>
+
+    <h3>Logged Output:</h3>
+    <div id="output"></div>
+
+    <script>
+        const outputDiv = document.getElementById('output');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+
+        startButton.addEventListener('click', async () => {
+            const response = await fetch('/start', { method: 'POST' });
+            const data = await response.json();
+            console.log(data.status);
+            startButton.disabled = true;
+            stopButton.disabled = false;
+            outputDiv.textContent = 'Logging...';
+        });
+
+        stopButton.addEventListener('click', async () => {
+            const response = await fetch('/stop', { method: 'POST' });
+            const data = await response.json();
+            console.log(data.status);
+            stopButton.disabled = true;
+            startButton.disabled = false;
+
+            // Fetch and display the logs
+            const logsResponse = await fetch('/logs');
+            const logsData = await logsResponse.json();
+            outputDiv.textContent = logsData.logs || 'No logs available.';
+        });
+    </script>
+
+</body>
+</html> 

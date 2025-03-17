@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Encryption Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('https://img.freepik.com/premium-photo/padlock-representing-cyber-security_1029077-317.jpg');
+            background-size: cover;
+            background-position: center;
+            color: rgb(240, 245, 246); /* Text color for better visibility */
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding-top: 100px; /* Space for fixed header */
+        }
+        header {
+            background: rgba(0, 0, 0, 0.7); /* Semi-transparent background for the header */
+            width: 100%;
+            padding: 20px 0;
+            text-align: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+        header h1 {
+            margin: 0;
+            color: #f04e31; /* Header text color */
+            font-size: 2rem;
+        }
+        .container {
+            display: flex; /* Use flexbox for layout */
+            justify-content: space-between; /* Space between the two boxes */
+            align-items: flex-start; /* Align items at the top */
+            margin-top: 80px; /* Space for the fixed header */
+            padding: 0 20px; /* Padding on sides */
+        }
+        .box {
+            background: rgba(0, 0, 0, 0.8); /* Semi-transparent black background */
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 300px; /* Set a max-width for boxes */
+            text-align: center;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.5);
+            flex: 1; /* Allow boxes to grow equally */
+            margin: 10px; /* Add margin for spacing between boxes */
+        }
+        h2 {
+            background: rgba(255, 255, 255, 0.1); /* Light transparent background */
+            padding: 10px;
+            border-radius: 5px;
+            margin: 0; /* Remove default margin */
+        }
+        input[type="file"] {
+            margin: 20px;
+            background: rgba(103, 215, 249, 0.8); /* Light background for file input */
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        img {
+            margin: 20px;
+            max-width: 300px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        button {
+            background-color: #f04e31; /* Button color */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #d94a28;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header with the title at the top of the website -->
+    <header>
+        <h1>Image Encryption Tool</h1>
+    </header>
+
+    <!-- Main container for encryption and decryption forms -->
+    <div class="container">
+        <!-- Box for image encryption on the left -->
+        <div class="box" style="margin-right: 20px; margin-left: 20px;"> <!-- 20px left margin -->
+            <h2>Encrypt an Image</h2>
+            <form id="encryptForm">
+                <input type="file" name="image" accept="image/*" required>
+                <div class="button-container">
+                    <button type="submit">Encrypt Image</button>
+                </div>
+            </form>
+            <img id="encryptedImage" src="" alt="Encrypted Image" style="display:none;">
+        </div>
+
+        <!-- Box for image decryption on the right -->
+        <div class="box" style="margin-left: 20px;"> <!-- 20px left margin -->
+            <h2>Decrypt an Encrypted Image</h2>
+            <form id="decryptForm">
+                <input type="file" name="image" accept="image/*" required>
+                <div class="button-container">
+                    <button type="submit">Decrypt Image</button>
+                </div>
+            </form>
+            <img id="decryptedImage" src="" alt="Decrypted Image" style="display:none;">
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('encryptForm').onsubmit = async function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            document.getElementById('encryptedImage').src = data.encrypted_image;
+            document.getElementById('encryptedImage').style.display = 'block';
+        };
+
+        document.getElementById('decryptForm').onsubmit = async function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            const response = await fetch('/decrypt', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            document.getElementById('decryptedImage').src = data.decrypted_image;
+            document.getElementById('decryptedImage').style.display = 'block';
+        };
+    </script>
+</body>
+</html>
