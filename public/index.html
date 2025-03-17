@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time CAPTCHA Service</title>
+    <style>
+        /* CSS for styling the CAPTCHA service */
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('https://wallpapers.com/images/hd/cyber-security-background-meuqfzxcg4gdd26s.jpg');
+            background-size: cover; /* Cover the whole page */
+            background-repeat: no-repeat; /* Do not repeat the image */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column; /* Align items in a column */
+            position: relative; /* For positioning the icon */
+        }
+
+        .header {
+            background-color: #FFDB58; /* Mustard background */
+            color: black; /* Black text */
+            padding: 20px; /* Increased padding */
+            margin-bottom: 20px; /* Space below header */
+            width: 100%; /* Full width */
+            text-align: center; /* Center the text */
+            position: absolute; /* Position the header at the top */
+            top: 0; /* Align to the top */
+            left: 0; /* Align to the left */
+            font-size: 36px; /* Increased font size for larger text */
+            font-weight: bold; /* Make text bold */
+        }
+
+        .header img {
+            position: absolute; /* Position the icon absolutely */
+            top: 10px; /* Distance from the top */
+            left: 10px; /* Distance from the left */
+            height: 70px; /* Adjust height for larger size */
+            width: auto; /* Maintain aspect ratio */
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.9); /* White background with slight transparency */
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 300px;
+            position: relative;
+            z-index: 1; /* Ensure the container is above the background */
+        }
+
+        .captcha-box {
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Center align the canvas */
+        }
+
+        canvas {
+            border: 1px solid #000;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 2px;
+        }
+
+        button {
+            padding: 10px;
+            border: none;
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        button[type="submit"] {
+            width: auto; /* Change width to auto for smaller size */
+            padding: 8px 16px; /* Adjust padding for a smaller button */
+            font-size: 14px; /* Optionally adjust font size */
+            margin-top: 10px; /* Add top margin to space from input */
+        }
+
+        #captcha-message {
+            color: red;
+            margin-bottom: 10px;
+        }
+
+        /* Center the form elements */
+        form {
+            display: flex;
+            flex-direction: column; /* Align items in a column */
+            align-items: center; /* Center items horizontally */
+        }
+
+        /* Timer display */
+        #timer {
+            font-size: 18px;
+            margin: 10px 0;
+            color: #e74c3c; /* Red color for timer */
+        }
+
+        /* Loading spinner style */
+        .spinner {
+            display: none;
+            border: 5px solid rgba(255, 255, 255, 0.6);
+            border-top: 5px solid #28a745;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Button container for refresh and audio buttons */
+        .button-container {
+            display: flex; /* Use flexbox for layout */
+            justify-content: space-between; /* Space the buttons evenly */
+            width: 100%; /* Full width */
+            margin-top: 10px; /* Space above buttons */
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="https://images-platform.99static.com/a9JkNRGKi6LTVa5TsY1ywdY_c2A=/252x102:1068x918/500x500/top/smart/99designs-contests-attachments/122/122963/attachment_122963659" alt="CAPTCHA Icon">
+        MY CAPTCHA DEFENSE
+    </div>
+    <div class="container">
+        <div class="spinner" id="loading-spinner"></div>
+        <div id="timer">Time left: <span id="time-left">30</span> seconds</div>
+        <form id="captcha-form">
+            <div class="captcha-box">
+                <canvas id="captcha" width="150" height="50"></canvas>
+            </div>
+            <div class="button-container">
+                <button type="button" id="refresh-btn">Refresh</button>
+                <button type="button" id="audio-btn">Audio</button>
+            </div>
+            <input type="text" id="captcha-input" placeholder="Enter CAPTCHA" required>
+            <div id="captcha-message"></div>
+            <button type="submit">Submit</button>
+        </form>
+        <div id="captcha-info" style="margin-top: 10px; font-size: 12px; color: #666;">
+            * Please type the characters you see above.
+        </div>
+    </div>
+
+    <script>
+        const captchaCanvas = document.getElementById('captcha');
+        const ctx = captchaCanvas.getContext('2d');
+        const refreshButton = document.getElementById('refresh-btn');
+        const captchaInput = document.getElementById('captcha-input');
+        const captchaMessage = document.getElementById('captcha-message');
+        const form = document.getElementById('captcha-form');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const timerDisplay = document.getElementById('time-left');
+        const audioButton = document.getElementById('audio-btn');
+        let captchaText = '';
+        let timer;
+        const timeLimit = 30; // Set time limit in seconds
+
+        // Show loading indicator
+        function showLoading() {
+            loadingSpinner.style.display = 'block';
+        }
+
+        // Hide loading indicator
+        function hideLoading() {
+            loadingSpinner.style.display = 'none';
+        }
+
+        // Fetch CAPTCHA from server and draw it on canvas
+        function fetchCaptcha() {
+            showLoading(); // Show loading spinner
+            fetch('/captcha')
+                .then(response => response.json())
+                .then(data => {
+                    captchaText = data.captcha;
+                    drawCaptcha(captchaText);
+                    startTimer(); // Start the timer when CAPTCHA is fetched
+                })
+                .finally(hideLoading); // Hide loading spinner
+        }
+
+        // Draw CAPTCHA text on canvas
+        function drawCaptcha(text) {
+            ctx.clearRect(0, 0, captchaCanvas.width, captchaCanvas.height);
+            ctx.font = '30px Arial';
+            ctx.fillStyle = '#000'; // Change text color to black
+            ctx.textAlign = 'center'; // Center the text
+            ctx.fillText(text, captchaCanvas.width / 2, captchaCanvas.height / 2 + 10); // Adjust position to center
+        }
+
+        // Start the timer
+        function startTimer() {
+            let timeLeft = timeLimit;
+            timerDisplay.textContent = timeLeft; // Reset timer display
+            timer = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    captchaMessage.textContent = 'Time is up! Refreshing CAPTCHA.';
+                    fetchCaptcha(); // Refresh CAPTCHA after timeout
+                }
+            }, 1000);
+        }
+
+        // Play audio CAPTCHA
+        function playAudioCaptcha() {
+            const audio = new SpeechSynthesisUtterance(captchaText);
+            audio.lang = 'en-US';
+            window.speechSynthesis.speak(audio);
+        }
+
+        // Validate CAPTCHA input with server
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const userInput = captchaInput.value;
+
+            showLoading(); // Show loading spinner
+            fetch('/validate-captcha', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userInput }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        captchaMessage.textContent = data.message;
+                        captchaMessage.style.color = 'green';
+                        captchaInput.value = ''; // Clear input on success
+                        clearInterval(timer); // Stop the timer on success
+                    } else {
+                        captchaMessage.textContent = data.message;
+                        captchaMessage.style.color = 'red';
+                    }
+                })
+                .finally(hideLoading); // Hide loading spinner
+        });
+
+        // Refresh CAPTCHA
+        refreshButton.addEventListener('click', fetchCaptcha);
+
+        // Audio button click
+        audioButton.addEventListener('click', playAudioCaptcha);
+
+        // Initial CAPTCHA fetch
+        fetchCaptcha();
+    </script>
+</body>
+</html>
+
+
+ 
