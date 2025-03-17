@@ -14,3 +14,6 @@ simple keylogger
 
 ![image](https://github.com/user-attachments/assets/e00fba8f-e16d-49d5-bdd7-8a6b7c905e28)
 
+Captcha 
+
+![image](https://github.com/user-attachments/assets/5a5a2ef9-1f15-4944-b767-f7118e35e7c3)
